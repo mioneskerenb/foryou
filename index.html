@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>For Ocean | My Everything</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600&family=Dancing+Script:wght@700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --dark-blue: #0a192f;
+            --electric-cyan: #00f2ff;
+            --soft-gold: #ffd700;
+            --paper-white: #f4f1ea;
+        }
+
+        body, html {
+            background-color: var(--dark-blue);
+            color: #e6f1ff;
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0; padding: 0;
+            height: 100vh; 
+            overflow: hidden;
+            /* Prevents rubber-banding on iOS */
+            position: fixed; 
+            width: 100%;
+        }
+
+        #particleCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+
+        /* Page Management */
+        .page { 
+            position: absolute; 
+            width: 100%; 
+            height: 100vh; 
+            display: none; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .page.active { display: flex; }
+        
+        #page5 { 
+            display: none; 
+            overflow-y: auto !important; 
+            background-color: var(--paper-white); 
+            color: #333; 
+            position: absolute; 
+            width: 100%; 
+            height: 100vh;
+            align-items: center;
+            justify-content: flex-start;
+            position: fixed; /* Allow scrolling on iOS */
+            -webkit-overflow-scrolling: touch;
+        }
+        #page5.active { display: block; }
+
+        /* Navigation Arrows - Adjusted for Mobile thumb reach */
+        .nav-arrow {
+            position: fixed; 
+            bottom: 30px; 
+            right: 30px;
+            cursor: pointer; 
+            z-index: 1000; 
+            color: var(--electric-cyan);
+            font-size: 1rem; 
+            font-weight: bold; 
+            background: rgba(10, 25, 47, 0.8);
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 1px solid var(--electric-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Message Interface */
+        .love-container {
+            width: 100%;
+            max-width: 1000px; 
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px; 
+            padding: 30px; 
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            margin-bottom: 60px; /* Space for nav arrow */
+        }
+        .love-photo-main {
+            width: 180px; 
+            height: 180px; 
+            object-fit: cover;
+            border-radius: 50%; /* Circular for mobile profile feel */
+            border: 3px solid var(--electric-cyan);
+            box-shadow: 0 0 25px rgba(0, 242, 255, 0.3);
+            margin-bottom: 20px;
+        }
+
+        /* Quiz Styling */
+        .glass-container {
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 25px; 
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px; 
+            text-align: center;
+        }
+        .option-btn {
+            background: transparent; 
+            border: 1px solid var(--electric-cyan);
+            color: white; 
+            margin: 8px 0; 
+            padding: 15px; 
+            border-radius: 12px; 
+            width: 100%; 
+            font-size: 1rem;
+        }
+
+        /* Gallery Page */
+        .memories-banner {
+            background: #111; color: white; padding: 60px 20px;
+            text-align: center; letter-spacing: 5px;
+            border-bottom: 4px double #444;
+        }
+        .memories-banner h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; }
+        
+        .gallery-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)); 
+            gap: 20px; 
+            padding: 20px; 
+        }
+        
+        .gallery-card { 
+            background: white; 
+            padding: 10px; 
+            border: 1px solid #eee; 
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .gallery-card img, .gallery-card video { 
+            width: 100%; 
+            height: auto; 
+            max-height: 450px;
+            object-fit: contain; 
+            background: #000;
+            border-radius: 4px; 
+        }
+
+        /* iPhone 16 Pro Max / Large Mobile Specifics */
+        @media (max-width: 440px) {
+            #typewriter { font-size: 2.2rem !important; }
+            .love-container h2 { font-size: 2.2rem !important; }
+            .love-container p { font-size: 1rem !important; }
+            .memories-banner h1 { font-size: 2rem; letter-spacing: 3px; }
+            .pro-message { font-size: 1.1rem !important; padding: 0 10px; }
+            
+            /* Add padding for Dynamic Island */
+            body { padding-top: env(safe-area-inset-top); }
+            
+            .nav-arrow {
+                width: calc(100% - 60px);
+                left: 30px;
+                text-align: center;
+                bottom: 20px;
+            }
+        }
+
+        /* Desktop Grid Fix */
+        @media (min-width: 768px) {
+            .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+            .love-photo-main { width: 250px; height: 250px; border-radius: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="page active" id="page1">
+        <div class="text-center px-3">
+            <h1 id="typewriter" style="font-size: 3.5rem; color: var(--electric-cyan); font-weight: 600;"></h1>
+            <p style="opacity: 0.8; margin-top: 15px;">A digital keepsake for your 31st.</p>
+        </div>
+        <div class="nav-arrow" onclick="nextPage(2)">START STORY &rarr;</div>
+    </div>
+
+    <div class="page" id="page2">
+        <div class="love-container text-center text-md-start">
+            <div class="row align-items-center">
+                <div class="col-md-4 text-center">
+                    <img src="D:\Ocean My Love\img\ocean.png" class="love-photo-main" alt="Ocean">
+                </div>
+                <div class="col-md-8 px-md-4">
+                    <h2 class="mb-3" style="font-family: 'Dancing Script', cursive; font-size: 3rem; color: var(--soft-gold);">My Beloved Ocean,</h2>
+                    <p style="line-height: 1.6;">
+                        They say distance makes the heart grow weary, but they don’t know the <strong>God</strong> who holds us together. 
+                        You are my peace in the storm, my "Ocean" of grace, and the man I thank the Heavens for every night.
+                    </p>
+                    <p class="religious-quote mt-3" style="font-size: 0.9rem;">
+                        "I thank my God every time I remember you." — Philippians 1:3
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="nav-arrow" onclick="nextPage(3)">VERIFY &rarr;</div>
+    </div>
+
+    <div class="page" id="page3">
+        <div class="glass-container">
+            <h3 class="mb-4" style="color: var(--electric-cyan); font-size: 1.5rem;">Access Portal</h3>
+            
+            <div id="step1" class="quiz-step active">
+                <p>What sport did we meet in?</p>
+                <input type="text" id="ans1" class="form-control text-center bg-transparent text-white border-info mb-3" style="border-radius: 10px;">
+                <button onclick="checkStep(1, 'chess')" class="option-btn" style="background: var(--electric-cyan); color: var(--dark-blue); font-weight: bold;">VERIFY</button>
+            </div>
+
+            <div id="step2" class="quiz-step">
+                <p>Anniversary Key (MMDD):</p>
+                <input type="text" id="ans2" class="form-control text-center bg-transparent text-white border-info mb-3" placeholder="0816">
+                <button onclick="checkStep(2, '0816')" class="option-btn" style="background: var(--electric-cyan); color: var(--dark-blue); font-weight: bold;">UNLOCK</button>
+            </div>
+
+            <div id="step3" class="quiz-step">
+                <p>What is my favorite color?</p>
+                <button class="option-btn" onclick="checkStep(3, 'green')">Green</button>
+                <button class="option-btn" onclick="checkStep(3, 'blue')">Blue</button>
+                <button class="option-btn" onclick="checkStep(3, 'family brown')">Family Brown</button>
+                <button class="option-btn" onclick="checkStep(3, 'khaki')">Khaki</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="page4">
+        <div class="text-center">
+            <h2 style="letter-spacing: 2px; color: var(--electric-cyan);">SECURE ACCESS GRANTED</h2>
+            <p>Loading your world...</p>
+        </div>
+    </div>
+
+    <div class="page" id="page5">
+        <div class="memories-banner">
+            <h1>.MEMORIES.</h1>
+            <p style="font-size: 0.8rem; opacity: 0.7;">TAP PHOTOS TO ENLARGE</p>
+        </div>
+
+        <div class="container-fluid px-3 pb-5">
+            <div class="text-center my-5">
+                <p class="pro-message" style="font-style: italic; color: #666;">"Thank you for being my Ocean, my peace, and my home."</p>
+            </div>
+
+            <div class="text-center"><span class="section-label">Videos</span></div>
+            <div class="gallery-grid" id="video-gallery"></div>
+
+            <div class="text-center mt-5"><span class="section-label">Photos</span></div>
+            <div class="gallery-grid" id="photo-gallery"></div>
+
+            <div class="text-center mt-5 py-5" style="border-top: 1px solid #ddd;">
+                <h2 style="color: #333; font-family: 'Dancing Script'; font-size: 2.5rem;">Happy 31st, Ocean.</h2>
+                <p style="color: #888;">I love you forever.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        const videoGrid = document.getElementById('video-gallery');
+        const photoGrid = document.getElementById('photo-gallery');
+
+        // Fill Videos
+        for (let i = 1; i <= 15; i++) {
+            videoGrid.innerHTML += `
+                <div class="gallery-card">
+                    <video src="videos/videos${i}.mp4" controls preload="metadata"></video>
+                    <p>Moment ${i}</p>
+                </div>`;
+        }
+
+        // Fill Photos
+        for (let i = 1; i <= 15; i++) {
+            photoGrid.innerHTML += `
+                <div class="gallery-card">
+                    <img src="img/ocean${i}.jpg" onclick="window.open(this.src, '_blank')">
+                    <p>Capture ${i}</p>
+                </div>`;
+        }
+
+        function nextPage(num) {
+            const current = document.querySelector('.page.active');
+            const next = document.getElementById('page' + num);
+            
+            gsap.to(current, { duration: 0.4, opacity: 0, scale: 0.95, onComplete: () => {
+                current.classList.remove('active');
+                next.classList.add('active');
+                gsap.fromTo(next, {opacity: 0, scale: 1.05}, {duration: 0.4, opacity: 1, scale: 1});
+                if(num === 5) {
+                    document.body.style.position = 'static';
+                    document.body.style.overflow = 'auto';
+                }
+            }});
+        }
+
+        function checkStep(step, correctVal) {
+            let val = (step < 3) ? document.getElementById('ans' + step).value.toLowerCase().trim() : correctVal;
+            if (step === 1 && val === 'chess') showStep(2);
+            else if (step === 2 && val === '0816') showStep(3);
+            else if (step === 3 && val === 'family brown') {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                nextPage(4);
+                setTimeout(() => nextPage(5), 2000);
+            } else if (step < 3) alert("Try again, my love.");
+        }
+
+        function showStep(n) {
+            const currentStep = document.querySelector('.quiz-step.active');
+            const nextStep = document.getElementById('step' + n);
+            gsap.to(currentStep, {opacity: 0, x: -20, duration: 0.3, onComplete: () => {
+                currentStep.classList.remove('active');
+                nextStep.classList.add('active');
+                gsap.fromTo(nextStep, {opacity: 0, x: 20}, {opacity: 1, x: 0, duration: 0.3});
+            }});
+        }
+
+        const text = "Happy Birthday, Ocean";
+        let idx = 0;
+        function type() { if(idx < text.length) { document.getElementById("typewriter").innerHTML += text.charAt(idx); idx++; setTimeout(type, 100); } }
+        window.onload = type;
+
+        // Background Particles
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        let particles = [];
+        class P { 
+            constructor() { 
+                this.x = Math.random()*canvas.width; 
+                this.y = Math.random()*canvas.height; 
+                this.s = Math.random()*1; 
+            } 
+            draw() { 
+                ctx.fillStyle = "rgba(0, 242, 255, 0.15)"; 
+                ctx.beginPath(); 
+                ctx.arc(this.x, this.y, this.s, 0, Math.PI*2); 
+                ctx.fill(); 
+                this.y-=0.2; 
+                if(this.y<0) this.y=canvas.height; 
+            } 
+        }
+        for(let i=0; i<50; i++) particles.push(new P());
+        function anim() { ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p=>p.draw()); requestAnimationFrame(anim); }
+        anim();
+    </script>
+</body>
+</html>
